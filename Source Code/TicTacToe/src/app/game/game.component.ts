@@ -32,6 +32,7 @@ import html2canvas from 'html2canvas';
 import { DecimalPipe } from '@angular/common';
 import { BoardComponent } from '../board/board.component';
 import { SoundService } from '../sound.service';
+import { BOARD_SIZE, createEmptyBoard, findWinningLine } from './game-logic';
 
 @Component({
   selector: 'app-game',
@@ -42,10 +43,11 @@ import { SoundService } from '../sound.service';
 /**
  * @class GameComponent
  * @description State-driven component leveraging Angular's fine-grained reactivity.
- * Implements a 3x3 grid logic with automatic resolution for victory/draw states.
+ * Implements 5x5 board logic with a four-in-a-row victory condition and automatic
+ * resolution for victory/draw states.
  */
 export class GameComponent implements OnInit {
-  squares = signal<('X' | 'O' | undefined)[]>(Array(9).fill(undefined));
+  squares = signal<('X' | 'O' | undefined)[]>(createEmptyBoard());
   xIsNext = signal<boolean>(true);
   winner = signal<'X' | 'O' | null>(null);
   counter = signal<number>(0);
@@ -158,7 +160,7 @@ export class GameComponent implements OnInit {
    * @method makeMove
    * @description Central event handler for user interaction. 
    * Orchestrates move validation, state updates, sound triggers, and game resolution status.
-   * @param idx - The index of the square being targeted (0-8).
+   * @param idx - The index of the square being targeted (0 to 24 on the 5x5 board).
    */
   makeMove(idx: number) {
     if (this.winner() || this.isDraw() || this.gameConcluding()) return;
@@ -183,7 +185,7 @@ export class GameComponent implements OnInit {
     const win = this.calculateWinner();
     this.winner.set(win);
 
-    if (win || this.counter() == 9) {
+    if (win || this.counter() === BOARD_SIZE * BOARD_SIZE) {
       this.gameConcluding.set(true); // Trigger animations
 
       if (win) {
@@ -203,30 +205,22 @@ export class GameComponent implements OnInit {
   /**
    * @method calculateWinner
    * @description Implementation of the core win-condition evaluation strategy.
-   * Iterates through pre-defined combinatorial victory paths to determine match resolution.
+   * Scans every straight run of four cells (rows, columns and both diagonals).
    * @returns The winning symbol ('X' or 'O') or null if no winner exists.
    */
   calculateWinner() {
-    const lines = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8],
-      [0, 3, 6], [1, 4, 7], [2, 5, 8],
-      [0, 4, 8], [2, 4, 6]
-    ]
-
-    for (let i = 0; i < lines.length; i++) {
-      const [a, b, c] = lines[i];
-      const squares = this.squares();
-      if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-        this.winningIndices.set([a, b, c]);
-        return squares[a];
-      }
+    const result = findWinningLine(this.squares());
+    if (!result) {
+      return null;
     }
-    return null
+
+    this.winningIndices.set(result.indices);
+    return result.player;
   }
 
   newGame() {
     this.soundService.playClick();
-    this.squares.set(Array(9).fill(undefined));
+    this.squares.set(createEmptyBoard());
     this.winner.set(null);
     this.isDraw.set(false);
     this.counter.set(0);

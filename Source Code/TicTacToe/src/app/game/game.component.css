@@ -84,11 +84,13 @@
 main {
     font-family: 'Play', sans-serif;
     display: grid;
-    grid-template-columns: 120px 120px 120px;
-    grid-gap: 10px;
-    /* Modern spacing */
+    /* 5x5 board: fluid columns keep every cell square on any viewport */
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-gap: 8px;
+    width: min(92vw, 520px);
+    box-sizing: border-box;
     margin: 15px 0;
-    padding: 15px;
+    padding: 12px;
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(15px);
     border-radius: 25px;
@@ -99,7 +101,9 @@ main {
 app-board {
     font-family: 'Play', sans-serif;
     border: none;
-    height: 120px;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
 }
 
@@ -286,15 +290,11 @@ h2 {
         gap: 5px;
     }
 
-    app-board {
-        height: 85px;
-        /* Smaller cards for mobile */
-    }
-
     main {
-        grid-template-columns: repeat(3, 85px);
+        width: min(94vw, 420px);
         margin: 5px 0;
-        padding: 10px;
+        padding: 8px;
+        grid-gap: 6px;
     }
 
     h2 {
@@ -481,31 +481,22 @@ h2 {
 
 .board-snapshot {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-gap: 10px;
-    /* Restored gap */
-    width: 150px;
-    /* Restored width */
+    grid-template-columns: repeat(5, 1fr);
+    grid-gap: 6px;
+    width: 210px;
     margin: 15px 0;
-    /* Restored margin */
     pointer-events: none;
 }
 
 .board-snapshot app-board {
-    height: 45px !important;
-    /* Restored height */
-    width: 45px !important;
-    /* Restored width */
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 1;
 }
 
 .board-snapshot ::ng-deep .square {
-    font-size: 1.2rem !important;
-    border-radius: 8px !important;
-}
-
-.board-snapshot app-board {
-    height: 120px;
-    /* Ensure it keeps original aspect ratio before scaling */
+    font-size: 0.9rem !important;
+    border-radius: 6px !important;
 }
 
 

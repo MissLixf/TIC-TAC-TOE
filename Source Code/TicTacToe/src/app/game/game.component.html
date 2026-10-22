@@ -99,7 +99,7 @@
       <div class="card-msg">{{ winner() ? 'Unbeatable Match!' : 'Perfect Symmetry!' }}</div>
       <!-- Mini Board Snapshot -->
       <div class="board-snapshot">
-        @for (val of squares(); track val; let i = $index) {
+        @for (val of squares(); track $index; let i = $index) {
         <app-board [value]="val" [isWinning]="winningIndices().includes(i)" [isSnapshot]="true"></app-board>
         }
       </div>
@@ -130,7 +130,7 @@
   }
   @if (!freshPage() && (!winner() || !isDraw() || gameConcluding())) {
   <main>
-    @for (val of squares(); track val; let i = $index) {
+    @for (val of squares(); track $index; let i = $index) {
     <app-board [value]="val" (click)="makeMove(i)" [class.victory-flip]="winningIndices().includes(i)"
       [class.draw-shake]="isDraw() && gameConcluding()"></app-board>
     }
