@@ -222,7 +222,7 @@ TIC-TAC-TOE-ANGULAR-FRAMEWORK/
 
 ### 1. Prerequisites
 - **Node.js 20+**: Required for modern Angular build and runtime. [Download Node.js](https://nodejs.org/)
-- **Angular CLI**: Install via `npm install -g @angular/cli`.
+- **pnpm 10+**: This project uses pnpm. Enable it via `corepack enable` (the exact version is pinned in `package.json#packageManager`). [Install pnpm](https://pnpm.io/installation)
 - **Git**: For version control and cloning. [Download Git](https://git-scm.com/downloads)
 
 > [!WARNING]
@@ -248,14 +248,14 @@ cd "Source Code/TicTacToe"
 #### Step 3: Synchronize Environment
 Install core dependencies and logic engines:
 ```bash
-npm install
+pnpm install
 ```
 
 ### 3. Execution
 Launch the primary reactive development server:
 
 ```bash
-ng serve
+pnpm start
 ```
 
 > [!TIP]
