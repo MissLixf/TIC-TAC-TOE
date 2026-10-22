@@ -33,6 +33,34 @@ import { DecimalPipe } from '@angular/common';
 import { BoardComponent } from '../board/board.component';
 import { SoundService } from '../sound.service';
 
+/**
+ * @type Difficulty
+ * @description Identifier of the selectable board configurations.
+ */
+export type Difficulty = 'easy' | 'medium' | 'hard';
+
+/**
+ * @interface DifficultyOption
+ * @description Board geometry associated with a difficulty level.
+ */
+export interface DifficultyOption {
+  value: Difficulty;
+  label: string;
+  size: number;
+  winLength: number;
+}
+
+/**
+ * @constant DIFFICULTY_OPTIONS
+ * @description Single source of truth for the supported difficulty levels.
+ * The order is also the order rendered in the difficulty selector.
+ */
+export const DIFFICULTY_OPTIONS: DifficultyOption[] = [
+  { value: 'easy', label: '低难度', size: 3, winLength: 3 },
+  { value: 'medium', label: '中难度', size: 5, winLength: 4 },
+  { value: 'hard', label: '高难度', size: 8, winLength: 6 }
+];
+
 @Component({
   selector: 'app-game',
   templateUrl: './game.component.html',
@@ -42,9 +70,28 @@ import { SoundService } from '../sound.service';
 /**
  * @class GameComponent
  * @description State-driven component leveraging Angular's fine-grained reactivity.
- * Implements a 3x3 grid logic with automatic resolution for victory/draw states.
+ * Supports selectable board geometries (3x3 / 5x5 / 8x8) with configurable winning runs.
  */
 export class GameComponent implements OnInit {
+  readonly difficultyOptions = DIFFICULTY_OPTIONS;
+
+  /**
+   * @property difficulty
+   * @description Currently selected difficulty level. Changing it rebuilds the board.
+   */
+  difficulty = signal<Difficulty>('easy');
+
+  /**
+   * @property difficultyConfig
+   * @description Geometry (board size + winning run length) for the active difficulty.
+   */
+  difficultyConfig = computed<DifficultyOption>(
+    () => DIFFICULTY_OPTIONS.find(o => o.value === this.difficulty()) ?? DIFFICULTY_OPTIONS[0]
+  );
+
+  boardSize = computed(() => this.difficultyConfig().size);
+  winLength = computed(() => this.difficultyConfig().winLength);
+
   squares = signal<('X' | 'O' | undefined)[]>(Array(9).fill(undefined));
   xIsNext = signal<boolean>(true);
   winner = signal<'X' | 'O' | null>(null);
@@ -183,7 +230,7 @@ export class GameComponent implements OnInit {
     const win = this.calculateWinner();
     this.winner.set(win);
 
-    if (win || this.counter() == 9) {
+    if (win || this.counter() === this.squares().length) {
       this.gameConcluding.set(true); // Trigger animations
 
       if (win) {
@@ -203,34 +250,77 @@ export class GameComponent implements OnInit {
   /**
    * @method calculateWinner
    * @description Implementation of the core win-condition evaluation strategy.
-   * Iterates through pre-defined combinatorial victory paths to determine match resolution.
+   * Scans every cell along the four axis-aligned directions looking for a run of
+   * `winLength` identical marks, so the same logic works for 3x3, 5x5 and 8x8 boards.
    * @returns The winning symbol ('X' or 'O') or null if no winner exists.
    */
   calculateWinner() {
-    const lines = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8],
-      [0, 3, 6], [1, 4, 7], [2, 5, 8],
-      [0, 4, 8], [2, 4, 6]
-    ]
+    const size = this.boardSize();
+    const needed = this.winLength();
+    const squares = this.squares();
+    const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
 
-    for (let i = 0; i < lines.length; i++) {
-      const [a, b, c] = lines[i];
-      const squares = this.squares();
-      if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-        this.winningIndices.set([a, b, c]);
-        return squares[a];
+    for (let row = 0; row < size; row++) {
+      for (let col = 0; col < size; col++) {
+        const mark = squares[row * size + col];
+        if (!mark) continue;
+
+        for (const [dRow, dCol] of directions) {
+          const indices: number[] = [];
+          for (let step = 0; step < needed; step++) {
+            const r = row + dRow * step;
+            const c = col + dCol * step;
+            if (r < 0 || r >= size || c < 0 || c >= size) break;
+            if (squares[r * size + c] !== mark) break;
+            indices.push(r * size + c);
+          }
+          if (indices.length === needed) {
+            this.winningIndices.set(indices);
+            return mark;
+          }
+        }
       }
     }
-    return null
+    return null;
+  }
+
+  /**
+   * @method selectDifficulty
+   * @description Applies a difficulty level and rebuilds the board with its geometry.
+   * @param value - Target difficulty level.
+   */
+  selectDifficulty(value: Difficulty) {
+    if (value === this.difficulty()) return;
+    this.soundService.playClick();
+    this.difficulty.set(value);
+    this.resetBoard();
+  }
+
+  /**
+   * @method changeDifficulty
+   * @description Returns to the landing screen so the player can pick another level.
+   */
+  changeDifficulty() {
+    this.soundService.playClick();
+    this.resetBoard();
+    this.freshPage.set(true);
   }
 
   newGame() {
     this.soundService.playClick();
-    this.squares.set(Array(9).fill(undefined));
+    this.resetBoard();
+    this.freshPage.set(false);
+  }
+
+  /**
+   * @method resetBoard
+   * @description Restores the board to an empty state for the active difficulty.
+   */
+  private resetBoard() {
+    this.squares.set(Array(this.boardSize() * this.boardSize()).fill(undefined));
     this.winner.set(null);
     this.isDraw.set(false);
     this.counter.set(0);
-    this.freshPage.set(false);
     this.showCard.set(false);
     this.winningIndices.set([]);
     this.gameConcluding.set(false);

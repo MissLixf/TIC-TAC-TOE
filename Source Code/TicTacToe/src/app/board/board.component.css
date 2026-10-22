@@ -2,7 +2,8 @@
     width: 100%;
     height: 100%;
     font-family: 'Play', sans-serif;
-    font-size: 60px;
+    /* Scales with the active board cell so 5x5 / 8x8 boards stay legible. */
+    font-size: calc(var(--cell-size, 120px) * 0.5);
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(5px);
     border: 1px solid rgba(255, 255, 255, 0.9);
