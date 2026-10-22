@@ -55,11 +55,11 @@ export interface DifficultyOption {
  * @description Single source of truth for the supported difficulty levels.
  * The order is also the order rendered in the difficulty selector.
  */
-export const DIFFICULTY_OPTIONS: DifficultyOption[] = [
-  { value: 'easy', label: '低难度', size: 3, winLength: 3 },
-  { value: 'medium', label: '中难度', size: 5, winLength: 4 },
-  { value: 'hard', label: '高难度', size: 8, winLength: 6 }
-];
+export const DIFFICULTY_OPTIONS = [
+  { value: 'easy', label: 'Easy', size: 3, winLength: 3 },
+  { value: 'medium', label: 'Medium', size: 5, winLength: 4 },
+  { value: 'hard', label: 'Hard', size: 8, winLength: 6 }
+] as const satisfies readonly DifficultyOption[];
 
 @Component({
   selector: 'app-game',
@@ -92,7 +92,7 @@ export class GameComponent implements OnInit {
   boardSize = computed(() => this.difficultyConfig().size);
   winLength = computed(() => this.difficultyConfig().winLength);
 
-  squares = signal<('X' | 'O' | undefined)[]>(Array(9).fill(undefined));
+  squares = signal<('X' | 'O' | undefined)[]>(Array(this.boardSize() ** 2).fill(undefined));
   xIsNext = signal<boolean>(true);
   winner = signal<'X' | 'O' | null>(null);
   counter = signal<number>(0);
@@ -205,7 +205,7 @@ export class GameComponent implements OnInit {
    * @method makeMove
    * @description Central event handler for user interaction. 
    * Orchestrates move validation, state updates, sound triggers, and game resolution status.
-   * @param idx - The index of the square being targeted (0-8).
+   * @param idx - The index of the square being targeted (0 ~ boardSize² - 1).
    */
   makeMove(idx: number) {
     if (this.winner() || this.isDraw() || this.gameConcluding()) return;
@@ -317,7 +317,8 @@ export class GameComponent implements OnInit {
    * @description Restores the board to an empty state for the active difficulty.
    */
   private resetBoard() {
-    this.squares.set(Array(this.boardSize() * this.boardSize()).fill(undefined));
+    this.squares.set(Array(this.boardSize() ** 2).fill(undefined));
+    this.xIsNext.set(true); // New games always start with X; not alternating by design.
     this.winner.set(null);
     this.isDraw.set(false);
     this.counter.set(0);

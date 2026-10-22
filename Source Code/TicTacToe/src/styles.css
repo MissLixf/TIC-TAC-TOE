@@ -42,5 +42,8 @@
 
 body {
     background: #0f172a;
-    overflow: hidden;
+    /* Allow vertical scrolling: on short viewports the 8x8 board can exceed the
+       available height, and clipping it would make the last rows unclickable. */
+    overflow-x: hidden;
+    overflow-y: auto;
 }

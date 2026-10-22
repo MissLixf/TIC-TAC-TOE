@@ -60,12 +60,12 @@
   @if (freshPage()) {
   <div class="landing-center-wrap">
     <h2>Let's Play Tic-Tac-Toe</h2>
-    <div class="difficulty-selector">
+    <div class="difficulty-selector" role="radiogroup" aria-label="Difficulty">
       @for (option of difficultyOptions; track option.value) {
       <button type="button" class="difficulty-btn" [class.active]="difficulty() === option.value"
-        (click)="selectDifficulty(option.value)">
+        [attr.aria-pressed]="difficulty() === option.value" (click)="selectDifficulty(option.value)">
         <span class="difficulty-label">{{ option.label }}</span>
-        <span class="difficulty-desc">{{ option.size }} × {{ option.size }} · 连 {{ option.winLength }} 子</span>
+        <span class="difficulty-desc">{{ option.size }} × {{ option.size }} · {{ option.winLength }} in a row</span>
       </button>
       }
     </div>
@@ -77,8 +77,8 @@
 
   @if (!freshPage()) {
   <h1 class="game-logo-title">TIC-TAC-TOE</h1>
-  <p class="difficulty-badge">{{ difficultyConfig().label }} · {{ boardSize() }} × {{ boardSize() }} · 连 {{
-    winLength() }} 子</p>
+  <p class="difficulty-badge">{{ difficultyConfig().label }} · {{ boardSize() }} × {{ boardSize() }} · {{
+    winLength() }} in a row</p>
   }
 
   @if (!winner() && !isDraw() && !freshPage()) {

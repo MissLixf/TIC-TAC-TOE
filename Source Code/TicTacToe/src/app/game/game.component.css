@@ -160,8 +160,14 @@
 main {
     font-family: 'Play', sans-serif;
     display: grid;
-    /* Board geometry is driven by the active difficulty (3x3 / 5x5 / 8x8). */
-    --cell-size: clamp(28px, min(calc(480px / var(--grid-size, 3)), calc((100vw - 90px) / var(--grid-size, 3))), 120px);
+    /* Board geometry is driven by the active difficulty (3x3 / 5x5 / 8x8).
+       The cell shrinks with the viewport height as well, so an 8x8 board still fits
+       (or at least stays scrollable) on 1366x768-class laptop screens. */
+    --cell-size: clamp(28px,
+        min(calc(480px / var(--grid-size, 3)),
+            calc((100vw - 90px) / var(--grid-size, 3)),
+            calc((100vh - 400px - (var(--grid-size, 3) - 1) * 10px) / var(--grid-size, 3))),
+        120px);
     grid-template-columns: repeat(var(--grid-size, 3), var(--cell-size));
     grid-gap: 10px;
     /* Modern spacing */
