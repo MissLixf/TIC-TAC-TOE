@@ -84,9 +84,10 @@
 main {
     font-family: 'Play', sans-serif;
     display: grid;
-    grid-template-columns: 120px 120px 120px;
+    grid-template-columns: repeat(3, 120px);
     grid-gap: 10px;
     /* Modern spacing */
+    justify-content: center;
     margin: 15px 0;
     padding: 15px;
     background: rgba(255, 255, 255, 0.1);
@@ -99,7 +100,7 @@ main {
 app-board {
     font-family: 'Play', sans-serif;
     border: none;
-    height: 120px;
+    height: var(--cell, 120px);
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
 }
 
@@ -286,13 +287,8 @@ h2 {
         gap: 5px;
     }
 
-    app-board {
-        height: 85px;
-        /* Smaller cards for mobile */
-    }
-
     main {
-        grid-template-columns: repeat(3, 85px);
+        /* Columns and cell size come from the component's responsive bindings */
         margin: 5px 0;
         padding: 10px;
     }
@@ -322,6 +318,19 @@ h2 {
         font-size: 16px;
         padding: 8px 15px;
         margin: 5px;
+    }
+
+    .difficulty-btn {
+        min-width: 120px;
+        padding: 12px 16px;
+    }
+
+    .difficulty-label {
+        font-size: 1.1rem;
+    }
+
+    .difficulty-meta {
+        font-size: 0.7rem;
     }
 
     .game-footer {
@@ -450,6 +459,97 @@ h2 {
     border-radius: 50px;
 }
 
+/* Difficulty Selection */
+.difficulty-title {
+    font-family: 'Play', sans-serif;
+    color: #fff;
+    font-size: 1.2rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.difficulty-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 10px;
+}
+
+.difficulty-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 150px;
+    padding: 16px 24px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #1a2a6c;
+    border-radius: 20px;
+}
+
+.difficulty-group .difficulty-btn {
+    margin: 0;
+}
+
+.difficulty-btn:hover {
+    transform: translateY(-6px) scale(1.04);
+}
+
+.difficulty-btn.active {
+    background: #00ffcc;
+    box-shadow: 0 0 25px rgba(0, 255, 204, 0.7);
+}
+
+.difficulty-label {
+    font-size: 1.4rem;
+    font-weight: 900;
+}
+
+.difficulty-meta {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    letter-spacing: 1px;
+}
+
+.difficulty-btn.compact {
+    font-size: 20px;
+    padding: 10px 24px;
+    min-width: 0;
+}
+
+.difficulty-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px;
+    padding: 6px 18px;
+    font-size: 0.9rem;
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 50px;
+    box-shadow: none;
+    animation: none;
+}
+
+.difficulty-badge:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: #fff;
+    transform: none;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.35);
+}
+
+.difficulty-switch {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 50px;
+    background: rgba(0, 255, 204, 0.85);
+    color: #1a2a6c;
+}
+
 /* ... existing hover ... */
 
 /* Share Card Text Styles */
@@ -482,30 +582,21 @@ h2 {
 .board-snapshot {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    grid-gap: 10px;
-    /* Restored gap */
+    grid-gap: 6px;
     width: 150px;
-    /* Restored width */
     margin: 15px 0;
-    /* Restored margin */
     pointer-events: none;
 }
 
 .board-snapshot app-board {
-    height: 45px !important;
-    /* Restored height */
-    width: 45px !important;
-    /* Restored width */
+    height: auto !important;
+    width: 100% !important;
+    aspect-ratio: 1 / 1;
 }
 
 .board-snapshot ::ng-deep .square {
-    font-size: 1.2rem !important;
-    border-radius: 8px !important;
-}
-
-.board-snapshot app-board {
-    height: 120px;
-    /* Ensure it keeps original aspect ratio before scaling */
+    font-size: calc(150px / var(--snapshot-cols, 3) * 0.5) !important;
+    border-radius: 6px !important;
 }
 
 
