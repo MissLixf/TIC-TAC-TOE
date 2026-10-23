@@ -33,6 +33,25 @@ import { DecimalPipe } from '@angular/common';
 import { BoardComponent } from '../board/board.component';
 import { SoundService } from '../sound.service';
 
+/**
+ * @description Difficulty presets. Each preset defines the board dimensions and
+ * the number of consecutive marks required to win.
+ */
+export type DifficultyKey = 'easy' | 'medium' | 'hard';
+
+export interface DifficultyPreset {
+  key: DifficultyKey;
+  label: string;
+  size: number;
+  winLength: number;
+}
+
+export const DIFFICULTIES: readonly DifficultyPreset[] = [
+  { key: 'easy', label: '低难度', size: 3, winLength: 3 },
+  { key: 'medium', label: '中难度', size: 5, winLength: 4 },
+  { key: 'hard', label: '高难度', size: 8, winLength: 6 }
+];
+
 @Component({
   selector: 'app-game',
   templateUrl: './game.component.html',
@@ -42,9 +61,12 @@ import { SoundService } from '../sound.service';
 /**
  * @class GameComponent
  * @description State-driven component leveraging Angular's fine-grained reactivity.
- * Implements a 3x3 grid logic with automatic resolution for victory/draw states.
+ * Implements configurable grid logic (3x3 / 5x5 / 8x8) with automatic resolution
+ * for victory/draw states.
  */
 export class GameComponent implements OnInit {
+  readonly difficulties = DIFFICULTIES;
+  difficulty = signal<DifficultyKey>('easy');
   squares = signal<('X' | 'O' | undefined)[]>(Array(9).fill(undefined));
   xIsNext = signal<boolean>(true);
   winner = signal<'X' | 'O' | null>(null);
@@ -63,6 +85,26 @@ export class GameComponent implements OnInit {
    * Ensures data consistency between turns.
    */
   player = computed(() => (this.xIsNext() ? 'X' : 'O') as 'X' | 'O');
+
+  /**
+   * @property preset
+   * @description Active difficulty configuration (board size + winning run length).
+   */
+  preset = computed(() => DIFFICULTIES.find(d => d.key === this.difficulty()) ?? DIFFICULTIES[0]);
+
+  boardSize = computed(() => this.preset().size);
+
+  winLength = computed(() => this.preset().winLength);
+
+  /**
+   * @property snapshotCell
+   * @description Cell size (px) used by the share-card snapshot, scaled so a
+   * larger board still fits the fixed-width card.
+   */
+  snapshotCell = computed(() => {
+    const size = this.boardSize();
+    return size <= 3 ? 45 : size <= 5 ? 30 : 20;
+  });
 
   constructor(private soundService: SoundService) { }
 
@@ -183,7 +225,7 @@ export class GameComponent implements OnInit {
     const win = this.calculateWinner();
     this.winner.set(win);
 
-    if (win || this.counter() == 9) {
+    if (win || this.counter() === this.boardSize() * this.boardSize()) {
       this.gameConcluding.set(true); // Trigger animations
 
       if (win) {
@@ -203,36 +245,91 @@ export class GameComponent implements OnInit {
   /**
    * @method calculateWinner
    * @description Implementation of the core win-condition evaluation strategy.
-   * Iterates through pre-defined combinatorial victory paths to determine match resolution.
+   * Scans every cell along the four axis directions (horizontal, vertical and
+   * both diagonals) and reports the first run of `winLength` identical marks.
    * @returns The winning symbol ('X' or 'O') or null if no winner exists.
    */
   calculateWinner() {
-    const lines = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8],
-      [0, 3, 6], [1, 4, 7], [2, 5, 8],
-      [0, 4, 8], [2, 4, 6]
-    ]
+    const size = this.boardSize();
+    const need = this.winLength();
+    const squares = this.squares();
+    const directions = [
+      [0, 1],   // horizontal
+      [1, 0],   // vertical
+      [1, 1],   // diagonal ↘
+      [1, -1]   // diagonal ↙
+    ];
 
-    for (let i = 0; i < lines.length; i++) {
-      const [a, b, c] = lines[i];
-      const squares = this.squares();
-      if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-        this.winningIndices.set([a, b, c]);
-        return squares[a];
+    for (let row = 0; row < size; row++) {
+      for (let col = 0; col < size; col++) {
+        const mark = squares[row * size + col];
+        if (!mark) continue;
+
+        for (const [dr, dc] of directions) {
+          const run: number[] = [row * size + col];
+
+          for (let step = 1; step < need; step++) {
+            const r = row + dr * step;
+            const c = col + dc * step;
+            if (r < 0 || r >= size || c < 0 || c >= size) break;
+            if (squares[r * size + c] !== mark) break;
+            run.push(r * size + c);
+          }
+
+          if (run.length === need) {
+            this.winningIndices.set(run);
+            return mark;
+          }
+        }
       }
     }
-    return null
+
+    return null;
+  }
+
+  /**
+   * @method selectDifficulty
+   * @description Applies a difficulty preset, clearing any in-flight round so the
+   * board is recreated with the new dimensions and win condition.
+   */
+  selectDifficulty(key: DifficultyKey) {
+    if (this.difficulty() === key) return;
+    this.soundService.playClick();
+    this.difficulty.set(key);
+    this.resetBoard();
+    this.freshPage.set(true);
+  }
+
+  /**
+   * @method changeDifficulty
+   * @description Returns to the difficulty selection screen after a match.
+   */
+  changeDifficulty() {
+    this.soundService.playClick();
+    this.resetBoard();
+    this.freshPage.set(true);
+  }
+
+  /**
+   * @method resetBoard
+   * @description Clears all round-scoped state and allocates a board that matches
+   * the active difficulty preset.
+   */
+  private resetBoard() {
+    const size = this.boardSize();
+    this.squares.set(Array(size * size).fill(undefined));
+    this.xIsNext.set(true);
+    this.winner.set(null);
+    this.isDraw.set(false);
+    this.counter.set(0);
+    this.showCard.set(false);
+    this.winningIndices.set([]);
+    this.gameConcluding.set(false);
   }
 
   newGame() {
     this.soundService.playClick();
-    this.squares.set(Array(9).fill(undefined));
-    this.winner.set(null);
-    this.isDraw.set(false);
-    this.counter.set(0);
+    this.resetBoard();
     this.freshPage.set(false);
-    this.showCard.set(false);
-    this.winningIndices.set([]);
-    this.gameConcluding.set(false);
   }
 }

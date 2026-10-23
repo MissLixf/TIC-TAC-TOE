@@ -57,6 +57,64 @@
     width: 100%;
 }
 
+/* Difficulty selection */
+.difficulty-picker {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin: 4px 0 10px;
+}
+
+button.difficulty-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 150px;
+    margin: 0;
+    padding: 12px 18px;
+    border-radius: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    font-size: 1rem;
+    box-shadow: none;
+    animation: none;
+}
+
+button.difficulty-option:hover {
+    background: rgba(255, 255, 255, 0.32);
+    color: #fff;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+button.difficulty-option.active {
+    background: #00ffcc;
+    border-color: #00ffcc;
+    color: #0e1d42;
+    box-shadow: 0 0 25px rgba(0, 255, 204, 0.55);
+}
+
+.diff-name {
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.diff-meta {
+    font-size: 0.78rem;
+    letter-spacing: 1px;
+    opacity: 0.85;
+}
+
+.difficulty-badge {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    margin-top: -10px;
+}
+
 .game-logo-title {
     font-family: 'Play', sans-serif;
     font-size: 1.8rem;
@@ -84,8 +142,12 @@
 main {
     font-family: 'Play', sans-serif;
     display: grid;
-    grid-template-columns: 120px 120px 120px;
-    grid-gap: 10px;
+    /* Cell size is derived from the active difficulty so 3x3, 5x5 and 8x8 boards
+       all stay inside the viewport. */
+    --grid-gap: 10px;
+    --cell: min(120px, calc((min(100vw - 70px, 460px) - (var(--grid-size, 3) - 1) * var(--grid-gap)) / var(--grid-size, 3)));
+    grid-template-columns: repeat(var(--grid-size, 3), var(--cell));
+    grid-gap: var(--grid-gap);
     /* Modern spacing */
     margin: 15px 0;
     padding: 15px;
@@ -96,10 +158,14 @@ main {
     animation: fadeInUp 1.2s ease-out;
 }
 
+main.compact-board {
+    --grid-gap: 8px;
+}
+
 app-board {
     font-family: 'Play', sans-serif;
     border: none;
-    height: 120px;
+    height: var(--cell, 120px);
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
 }
 
@@ -286,13 +352,8 @@ h2 {
         gap: 5px;
     }
 
-    app-board {
-        height: 85px;
-        /* Smaller cards for mobile */
-    }
-
     main {
-        grid-template-columns: repeat(3, 85px);
+        /* --cell already shrinks with the viewport width */
         margin: 5px 0;
         padding: 10px;
     }
@@ -322,6 +383,24 @@ h2 {
         font-size: 16px;
         padding: 8px 15px;
         margin: 5px;
+    }
+
+    .difficulty-picker {
+        gap: 8px;
+    }
+
+    button.difficulty-option {
+        min-width: 105px;
+        padding: 10px 12px;
+    }
+
+    .diff-name {
+        font-size: 1rem;
+    }
+
+    .diff-meta {
+        font-size: 0.68rem;
+        letter-spacing: 0;
     }
 
     .game-footer {
@@ -481,10 +560,11 @@ h2 {
 
 .board-snapshot {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-gap: 10px;
+    --snapshot-gap: 6px;
+    grid-template-columns: repeat(var(--snapshot-size, 3), var(--snapshot-cell, 45px));
+    grid-gap: var(--snapshot-gap);
     /* Restored gap */
-    width: 150px;
+    width: fit-content;
     /* Restored width */
     margin: 15px 0;
     /* Restored margin */
@@ -492,20 +572,15 @@ h2 {
 }
 
 .board-snapshot app-board {
-    height: 45px !important;
+    height: var(--snapshot-cell, 45px) !important;
     /* Restored height */
-    width: 45px !important;
+    width: var(--snapshot-cell, 45px) !important;
     /* Restored width */
 }
 
 .board-snapshot ::ng-deep .square {
-    font-size: 1.2rem !important;
+    font-size: calc(var(--snapshot-cell, 45px) * 0.55) !important;
     border-radius: 8px !important;
-}
-
-.board-snapshot app-board {
-    height: 120px;
-    /* Ensure it keeps original aspect ratio before scaling */
 }
 
 
