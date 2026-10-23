@@ -92,9 +92,9 @@ export class GameComponent implements OnInit {
   boardSize = computed(() => this.difficultyConfig().size);
   winLength = computed(() => this.difficultyConfig().winLength);
 
-  squares = signal<('X' | 'O' | undefined)[]>(Array(this.boardSize() ** 2).fill(undefined));
-  xIsNext = signal<boolean>(true);
-  winner = signal<'X' | 'O' | null>(null);
+  squares = signal<('A' | 'B' | undefined)[]>(Array(this.boardSize() ** 2).fill(undefined));
+  aIsNext = signal<boolean>(true);
+  winner = signal<'A' | 'B' | null>(null);
   counter = signal<number>(0);
   isDraw = signal<boolean>(false);
   freshPage = signal<boolean>(true);
@@ -109,7 +109,7 @@ export class GameComponent implements OnInit {
    * @description Computed signal that derives the current active player symbol.
    * Ensures data consistency between turns.
    */
-  player = computed(() => (this.xIsNext() ? 'X' : 'O') as 'X' | 'O');
+  player = computed(() => (this.aIsNext() ? 'A' : 'B') as 'A' | 'B');
 
   constructor(private soundService: SoundService) { }
 
@@ -217,13 +217,13 @@ export class GameComponent implements OnInit {
         return newSquares;
       });
 
-      if (currentPlayer === 'X') {
-        this.soundService.playMoveX();
+      if (currentPlayer === 'A') {
+        this.soundService.playMoveA();
       } else {
-        this.soundService.playMoveO();
+        this.soundService.playMoveB();
       }
 
-      this.xIsNext.update(x => !x);
+      this.aIsNext.update(x => !x);
       this.counter.update(c => c + 1);
     }
 
@@ -252,7 +252,7 @@ export class GameComponent implements OnInit {
    * @description Implementation of the core win-condition evaluation strategy.
    * Scans every cell along the four axis-aligned directions looking for a run of
    * `winLength` identical marks, so the same logic works for 3x3, 5x5 and 8x8 boards.
-   * @returns The winning symbol ('X' or 'O') or null if no winner exists.
+   * @returns The winning symbol ('A' or 'B') or null if no winner exists.
    */
   calculateWinner() {
     const size = this.boardSize();
@@ -318,7 +318,7 @@ export class GameComponent implements OnInit {
    */
   private resetBoard() {
     this.squares.set(Array(this.boardSize() ** 2).fill(undefined));
-    this.xIsNext.set(true); // New games always start with X; not alternating by design.
+    this.aIsNext.set(true); // New games always start with A; not alternating by design.
     this.winner.set(null);
     this.isDraw.set(false);
     this.counter.set(0);

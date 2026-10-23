@@ -62,13 +62,13 @@ export class SoundService {
         this.playTone(600, 0.1, 'sine', 0.1);
     }
 
-    playMoveX() {
+    playMoveA() {
         this.initAudio();
         this.playTone(200, 0.2, 'square', 0.05);
         setTimeout(() => this.playTone(400, 0.1, 'sine', 0.05), 50);
     }
 
-    playMoveO() {
+    playMoveB() {
         this.initAudio();
         this.playTone(300, 0.2, 'triangle', 0.05);
         setTimeout(() => this.playTone(500, 0.1, 'sine', 0.05), 50);
