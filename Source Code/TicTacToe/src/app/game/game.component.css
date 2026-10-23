@@ -44,7 +44,8 @@
     /* Reclaimed padding */
     gap: 8px;
     /* Tighter global gap */
-    overflow-x: hidden;
+    /* Boards that hit the minimum cell size scroll instead of being clipped. */
+    overflow-x: auto;
     transition: all 0.7s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
@@ -95,6 +96,18 @@ main {
     border-radius: 25px;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
     animation: fadeInUp 1.2s ease-out;
+    /* When cells hit their 36px floor, scroll the overflow instead of clipping it. */
+    max-width: 100%;
+    overflow: auto;
+}
+
+/*
+ * Large boards (8x8) run the same idle pulse on all 64 cells. That is 64
+ * continuously repainting layers plus a blur each — too expensive on mobile.
+ */
+main.large-board ::ng-deep .square {
+    animation: none;
+    backdrop-filter: none;
 }
 
 app-board {
@@ -596,7 +609,8 @@ h2 {
 
 .board-snapshot ::ng-deep .square {
     font-size: calc(150px / var(--snapshot-cols, 3) * 0.5) !important;
-    border-radius: 6px !important;
+    /* Match the live board's rounded corners at smaller cell sizes. */
+    border-radius: calc(150px / var(--snapshot-cols, 3) * 0.12) !important;
 }
 
 
@@ -871,5 +885,40 @@ h2 {
     50% {
         opacity: 0.6;
         transform: translate(-50%, -50%) scale(1.2);
+    }
+}
+
+/* Honour the OS "reduce motion" setting for decorative motion. */
+@media (prefers-reduced-motion: reduce) {
+
+    .game-logo-title,
+    h1,
+    h2,
+    button,
+    .game-footer,
+    .share-card,
+    .angular-logo,
+    .logo-glow,
+    .progress-glow,
+    .victory-flip,
+    .draw-shake {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    /* The logo starts hidden and relies on its animation to fade in. */
+    .game-logo-title {
+        opacity: 1 !important;
+    }
+
+    .victory-flip ::ng-deep .square {
+        animation: none !important;
+    }
+
+    app-board:hover,
+    .victory-flip:hover,
+    .difficulty-btn:hover,
+    button:hover {
+        transform: none !important;
     }
 }

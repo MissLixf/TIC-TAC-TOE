@@ -32,6 +32,7 @@ import html2canvas from 'html2canvas';
 import { DecimalPipe } from '@angular/common';
 import { BoardComponent } from '../board/board.component';
 import { SoundService } from '../sound.service';
+import { findWinningLine } from './game-logic';
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
@@ -45,9 +46,9 @@ interface DifficultyConfig {
 }
 
 const DIFFICULTIES: DifficultyConfig[] = [
-  { key: 'easy', label: '低难度', size: 3, winLength: 3, cell: 120, gap: 10 },
-  { key: 'medium', label: '中难度', size: 5, winLength: 4, cell: 72, gap: 8 },
-  { key: 'hard', label: '高难度', size: 8, winLength: 6, cell: 46, gap: 5 },
+  { key: 'easy', label: 'Easy', size: 3, winLength: 3, cell: 120, gap: 10 },
+  { key: 'medium', label: 'Medium', size: 5, winLength: 4, cell: 72, gap: 8 },
+  { key: 'hard', label: 'Hard', size: 8, winLength: 6, cell: 46, gap: 5 },
 ];
 
 @Component({
@@ -69,19 +70,25 @@ export class GameComponent implements OnInit {
   boardSize = computed(() => this.config().size);
   winLength = computed(() => this.config().winLength);
 
+  /** Vertical space (px) taken by the header, player status and footer. */
+  private readonly BOARD_CHROME_HEIGHT = 300;
+
+  /** Smallest tappable cell. The board area scrolls rather than shrinking further. */
+  private readonly MIN_CELL_SIZE = 36;
+
   /**
    * @property cellLength
    * @description Responsive cell size. Shrinks with the board so larger grids
-   * still fit the viewport on desktop and mobile.
+   * still fit the viewport, but never below a usable touch target.
    */
   cellLength = computed(() => {
     const { size, cell } = this.config();
-    return `min(${cell}px, calc((100vw - 80px) / ${size}), calc((100vh - 300px) / ${size}))`;
+    return `max(${this.MIN_CELL_SIZE}px, min(${cell}px, calc((100vw - 80px) / ${size}), calc((100vh - ${this.BOARD_CHROME_HEIGHT}px) / ${size})))`;
   });
 
   gridColumns = computed(() => `repeat(${this.boardSize()}, ${this.cellLength()})`);
 
-  squares = signal<('X' | 'O' | undefined)[]>(Array(9).fill(undefined));
+  squares = signal<('X' | 'O' | undefined)[]>(Array(this.config().size ** 2).fill(undefined));
   xIsNext = signal<boolean>(true);
   winner = signal<'X' | 'O' | null>(null);
   counter = signal<number>(0);
@@ -238,43 +245,18 @@ export class GameComponent implements OnInit {
 
   /**
    * @method calculateWinner
-   * @description Implementation of the core win-condition evaluation strategy.
-   * Scans the board in four directions (horizontal, vertical and both diagonals)
-   * and reports the first run of `winLength` matching symbols.
+   * @description Delegates the win-condition scan to the pure `findWinningLine`
+   * helper and stores the full winning run so every winning cell is highlighted.
    * @returns The winning symbol ('X' or 'O') or null if no winner exists.
    */
-  calculateWinner() {
-    const squares = this.squares();
-    const size = this.boardSize();
-    const needed = this.winLength();
-    const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
-
-    for (let row = 0; row < size; row++) {
-      for (let col = 0; col < size; col++) {
-        const symbol = squares[row * size + col];
-        if (!symbol) continue;
-
-        for (const [dRow, dCol] of directions) {
-          const indices: number[] = [];
-          let r = row;
-          let c = col;
-
-          for (let step = 0; step < needed; step++) {
-            if (r < 0 || r >= size || c < 0 || c >= size) break;
-            if (squares[r * size + c] !== symbol) break;
-            indices.push(r * size + c);
-            r += dRow;
-            c += dCol;
-          }
-
-          if (indices.length === needed) {
-            this.winningIndices.set(indices);
-            return symbol;
-          }
-        }
-      }
+  calculateWinner(): 'X' | 'O' | null {
+    const line = findWinningLine(this.squares(), this.boardSize(), this.winLength());
+    if (!line) {
+      return null;
     }
-    return null;
+
+    this.winningIndices.set(line.indices);
+    return line.symbol;
   }
 
   /**
@@ -292,8 +274,15 @@ export class GameComponent implements OnInit {
   /**
    * @method changeDifficulty
    * @description Returns to the landing screen so a new difficulty can be picked.
+   * A match in progress is discarded, so ask for confirmation first.
    */
   changeDifficulty() {
+    const hasMoves = this.counter() > 0;
+    const matchInProgress = hasMoves && !this.winner() && !this.isDraw();
+    if (matchInProgress && !confirm('The current game will be lost. Continue?')) {
+      return;
+    }
+
     this.soundService.playClick();
     this.resetBoard();
     this.freshPage.set(true);

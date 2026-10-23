@@ -1,0 +1,30 @@
+name: Test
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  game-logic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          # Native TypeScript execution requires Node 22.6+; 24 is the current LTS.
+          node-version: "24"
+
+      - name: Install Dependencies
+        run: npm ci
+        working-directory: 'Source Code/TicTacToe'
+
+      - name: Test game logic
+        run: npm run test:logic
+        working-directory: 'Source Code/TicTacToe'

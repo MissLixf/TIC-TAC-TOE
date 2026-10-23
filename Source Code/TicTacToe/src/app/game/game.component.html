@@ -60,12 +60,13 @@
   @if (freshPage()) {
   <div class="landing-center-wrap">
     <h2>Let's Play Tic-Tac-Toe</h2>
-    <p class="difficulty-title">选择难度</p>
+    <p class="difficulty-title">Select Difficulty</p>
     <div class="difficulty-group">
       @for (option of difficulties; track option.key) {
-      <button class="difficulty-btn" [class.active]="difficulty() === option.key" (click)="startGame(option.key)">
+      <button class="difficulty-btn" [class.active]="difficulty() === option.key"
+        [attr.aria-pressed]="difficulty() === option.key" (click)="startGame(option.key)">
         <span class="difficulty-label">{{ option.label }}</span>
-        <span class="difficulty-meta">{{ option.size }} × {{ option.size }} · 连成 {{ option.winLength }} 子</span>
+        <span class="difficulty-meta">{{ option.size }} × {{ option.size }} · Connect {{ option.winLength }}</span>
       </button>
       }
     </div>
@@ -77,17 +78,18 @@
   }
 
   @if (!winner() && !isDraw() && !freshPage()) {
-  <h1>Current Player: {{player()}}</h1>
-  <button class="difficulty-badge" (click)="changeDifficulty()">
-    {{ config().label }} · {{ boardSize() }} × {{ boardSize() }} · 连成 {{ winLength() }} 子
-    <span class="difficulty-switch">切换</span>
+  <h1 aria-live="polite">Current Player: {{player()}}</h1>
+  <button class="difficulty-badge" (click)="changeDifficulty()"
+    title="Change difficulty (the current game will be lost)">
+    {{ config().label }} · {{ boardSize() }} × {{ boardSize() }} · Connect {{ winLength() }}
+    <span class="difficulty-switch">Change</span>
   </button>
   }
   @if (winner()) {
-  <h2 class="winner-msg">Player {{winner()}} won!!!</h2>
+  <h2 class="winner-msg" aria-live="polite">Player {{winner()}} won!!!</h2>
   }
   @if (isDraw()) {
-  <h2 class="winner-msg">Draw!!!</h2>
+  <h2 class="winner-msg" aria-live="polite">Draw!!!</h2>
   }
   @if ((winner() || isDraw()) && !gameConcluding()) {
   <div class="button-group">
@@ -142,8 +144,8 @@
   </div>
   }
   @if (!freshPage() && (!winner() || !isDraw() || gameConcluding())) {
-  <main [style.grid-template-columns]="gridColumns()" [style.--cell]="cellLength()"
-    [style.gap.px]="config().gap">
+  <main [class.large-board]="boardSize() >= 8" [style.grid-template-columns]="gridColumns()"
+    [style.--cell]="cellLength()" [style.gap.px]="config().gap">
     @for (val of squares(); track $index; let i = $index) {
     <app-board [value]="val" (click)="makeMove(i)" [class.victory-flip]="winningIndices().includes(i)"
       [class.draw-shake]="isDraw() && gameConcluding()"></app-board>
