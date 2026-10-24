@@ -272,6 +272,8 @@ export class GameComponent implements OnInit {
     if (this.difficulty().key === difficulty.key) return;
     this.soundService.playClick();
     this.difficulty.set(difficulty);
+    // A new board always opens with X, regardless of who moved last in the previous round.
+    this.xIsNext.set(true);
     this.resetBoard();
   }
 
