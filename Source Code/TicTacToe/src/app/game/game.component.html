@@ -57,6 +57,20 @@
 
 @if (!loading()) {
 <div class="outer-cont" [class.status-compact]="winner() || isDraw()">
+  <!-- Difficulty selector: available before and during a match -->
+  <div class="difficulty-panel">
+    <span class="difficulty-heading">难度</span>
+    <div class="difficulty-options">
+      @for (level of difficulties; track level.key) {
+      <button type="button" class="difficulty-btn" [class.active]="difficulty().key === level.key"
+        (click)="selectDifficulty(level)">
+        <span class="difficulty-label">{{ level.label }}</span>
+        <span class="difficulty-meta">{{ level.layout }} · {{ level.rule }}</span>
+      </button>
+      }
+    </div>
+  </div>
+
   @if (freshPage()) {
   <div class="landing-center-wrap">
     <h2>Let's Play Tic-Tac-Toe</h2>
@@ -98,8 +112,9 @@
       }
       <div class="card-msg">{{ winner() ? 'Unbeatable Match!' : 'Perfect Symmetry!' }}</div>
       <!-- Mini Board Snapshot -->
-      <div class="board-snapshot">
-        @for (val of squares(); track val; let i = $index) {
+      <div class="board-snapshot" [style.--board-size]="boardSize()"
+        [class.board-medium]="difficulty().key === 'medium'" [class.board-hard]="difficulty().key === 'hard'">
+        @for (val of squares(); track i; let i = $index) {
         <app-board [value]="val" [isWinning]="winningIndices().includes(i)" [isSnapshot]="true"></app-board>
         }
       </div>
@@ -129,8 +144,9 @@
   </div>
   }
   @if (!freshPage() && (!winner() || !isDraw() || gameConcluding())) {
-  <main>
-    @for (val of squares(); track val; let i = $index) {
+  <main [style.--board-size]="boardSize()" [class.board-medium]="difficulty().key === 'medium'"
+    [class.board-hard]="difficulty().key === 'hard'">
+    @for (val of squares(); track i; let i = $index) {
     <app-board [value]="val" (click)="makeMove(i)" [class.victory-flip]="winningIndices().includes(i)"
       [class.draw-shake]="isDraw() && gameConcluding()"></app-board>
     }

@@ -82,10 +82,14 @@
 }
 
 main {
+    /* Difficulty-driven layout: board columns and cell metrics come from these variables */
+    --cell-size: 120px;
+    --board-gap: 10px;
+    --mark-size: 60px;
     font-family: 'Play', sans-serif;
     display: grid;
-    grid-template-columns: 120px 120px 120px;
-    grid-gap: 10px;
+    grid-template-columns: repeat(var(--board-size, 3), var(--cell-size));
+    grid-gap: var(--board-gap);
     /* Modern spacing */
     margin: 15px 0;
     padding: 15px;
@@ -96,11 +100,94 @@ main {
     animation: fadeInUp 1.2s ease-out;
 }
 
+main.board-medium {
+    --cell-size: 92px;
+    --board-gap: 8px;
+    --mark-size: 44px;
+}
+
+main.board-hard {
+    --cell-size: 60px;
+    --board-gap: 6px;
+    --mark-size: 28px;
+}
+
 app-board {
     font-family: 'Play', sans-serif;
     border: none;
     height: 120px;
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+}
+
+main app-board {
+    height: var(--cell-size);
+}
+
+/* Difficulty selector */
+.difficulty-panel {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 24px;
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 18px;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.difficulty-heading {
+    color: #fff;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.9;
+}
+
+.difficulty-options {
+    display: flex;
+    gap: 8px;
+}
+
+.difficulty-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 92px;
+    padding: 8px 12px;
+    font-family: 'Play', sans-serif;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.difficulty-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+}
+
+.difficulty-btn.active {
+    background: linear-gradient(135deg, #00ffcc 0%, #38bdf8 100%);
+    border-color: #fff;
+    color: #0e1d42;
+    box-shadow: 0 0 18px rgba(0, 255, 204, 0.6);
+}
+
+.difficulty-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.difficulty-meta {
+    font-size: 0.7rem;
+    letter-spacing: 0.5px;
+    opacity: 0.85;
 }
 
 /* Winning State Cinematic Recoloring */
@@ -286,15 +373,39 @@ h2 {
         gap: 5px;
     }
 
-    app-board {
-        height: 85px;
-        /* Smaller cards for mobile */
-    }
-
     main {
-        grid-template-columns: repeat(3, 85px);
+        --cell-size: 85px;
+        --board-gap: 6px;
+        --mark-size: 40px;
         margin: 5px 0;
         padding: 10px;
+    }
+
+    main.board-medium {
+        --cell-size: 58px;
+        --mark-size: 26px;
+    }
+
+    main.board-hard {
+        --cell-size: 38px;
+        --board-gap: 4px;
+        --mark-size: 16px;
+    }
+
+    .difficulty-panel {
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 12px;
+        padding: 8px 12px;
+    }
+
+    .difficulty-btn {
+        min-width: 76px;
+        padding: 6px 8px;
+    }
+
+    .difficulty-meta {
+        font-size: 0.62rem;
     }
 
     h2 {
@@ -480,22 +591,29 @@ h2 {
 }
 
 .board-snapshot {
+    /* Snapshot mirrors the active board dimensions inside the share card */
+    --snapshot-cell: 45px;
+    --snapshot-gap: 10px;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-gap: 10px;
-    /* Restored gap */
-    width: 150px;
-    /* Restored width */
+    grid-template-columns: repeat(var(--board-size, 3), var(--snapshot-cell));
+    grid-gap: var(--snapshot-gap);
     margin: 15px 0;
-    /* Restored margin */
     pointer-events: none;
 }
 
+.board-snapshot.board-medium {
+    --snapshot-cell: 30px;
+    --snapshot-gap: 5px;
+}
+
+.board-snapshot.board-hard {
+    --snapshot-cell: 22px;
+    --snapshot-gap: 4px;
+}
+
 .board-snapshot app-board {
-    height: 45px !important;
-    /* Restored height */
-    width: 45px !important;
-    /* Restored width */
+    height: var(--snapshot-cell) !important;
+    width: var(--snapshot-cell) !important;
 }
 
 .board-snapshot ::ng-deep .square {
@@ -503,9 +621,10 @@ h2 {
     border-radius: 8px !important;
 }
 
-.board-snapshot app-board {
-    height: 120px;
-    /* Ensure it keeps original aspect ratio before scaling */
+.board-snapshot.board-medium ::ng-deep .square,
+.board-snapshot.board-hard ::ng-deep .square {
+    font-size: 0.7rem !important;
+    border-radius: 5px !important;
 }
 
 
