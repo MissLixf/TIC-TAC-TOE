@@ -57,6 +57,81 @@
     width: 100%;
 }
 
+.difficulty-hint {
+    font-family: 'Play', sans-serif;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 1rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin: 0 0 12px;
+}
+
+.difficulty-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: stretch;
+    gap: 14px;
+    max-width: 720px;
+}
+
+.difficulty-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 170px;
+    margin: 0;
+    padding: 18px 26px;
+    border: 2px solid transparent;
+    background: rgba(255, 255, 255, 0.9);
+    color: #1a2a6c;
+}
+
+.difficulty-btn.difficulty-active {
+    border-color: #00ffcc;
+    box-shadow: 0 0 25px rgba(0, 255, 204, 0.55);
+}
+
+.difficulty-label {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 2px;
+}
+
+.difficulty-meta {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    opacity: 0.65;
+}
+
+.difficulty-badge {
+    font-family: 'Play', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    color: rgba(255, 255, 255, 0.85);
+    padding: 4px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+    margin-bottom: 6px;
+    animation: fadeInUp 0.9s ease-out;
+}
+
+button.secondary-btn {
+    background: transparent;
+    color: #ffffff;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+}
+
+button.secondary-btn:hover {
+    background: #ffffff;
+    color: #1a2a6c;
+    border-color: #ffffff;
+}
+
 .game-logo-title {
     font-family: 'Play', sans-serif;
     font-size: 1.8rem;
@@ -84,7 +159,7 @@
 main {
     font-family: 'Play', sans-serif;
     display: grid;
-    grid-template-columns: 120px 120px 120px;
+    grid-template-columns: repeat(var(--board-size, 3), var(--cell-size, 120px));
     grid-gap: 10px;
     /* Modern spacing */
     margin: 15px 0;
@@ -94,12 +169,40 @@ main {
     border-radius: 25px;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
     animation: fadeInUp 1.2s ease-out;
+    transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+/* Difficulty tiers: board edge count, cell size and mark scale */
+main[data-difficulty='low'] {
+    --board-size: 3;
+    --cell-size: 120px;
+}
+
+main[data-difficulty='medium'] {
+    --board-size: 5;
+    --cell-size: 72px;
+}
+
+main[data-difficulty='high'] {
+    --board-size: 8;
+    --cell-size: 44px;
+    grid-gap: 8px;
+}
+
+main[data-difficulty='medium'] ::ng-deep .square {
+    font-size: 38px;
+    border-radius: 12px;
+}
+
+main[data-difficulty='high'] ::ng-deep .square {
+    font-size: 21px;
+    border-radius: 8px;
 }
 
 app-board {
     font-family: 'Play', sans-serif;
     border: none;
-    height: 120px;
+    height: var(--cell-size, 120px);
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
 }
 
@@ -287,14 +390,47 @@ h2 {
     }
 
     app-board {
-        height: 85px;
+        height: var(--cell-size, 85px);
         /* Smaller cards for mobile */
     }
 
     main {
-        grid-template-columns: repeat(3, 85px);
         margin: 5px 0;
         padding: 10px;
+    }
+
+    main[data-difficulty='low'] {
+        --cell-size: 85px;
+    }
+
+    main[data-difficulty='medium'] {
+        --cell-size: 54px;
+        grid-gap: 8px;
+    }
+
+    main[data-difficulty='high'] {
+        --cell-size: 32px;
+        grid-gap: 6px;
+    }
+
+    main[data-difficulty='medium'] ::ng-deep .square {
+        font-size: 26px;
+    }
+
+    main[data-difficulty='high'] ::ng-deep .square {
+        font-size: 15px;
+        border-radius: 6px;
+    }
+
+    .difficulty-group {
+        flex-direction: column;
+        width: 100%;
+        padding: 0 16px;
+    }
+
+    .difficulty-btn {
+        min-width: unset;
+        width: 100%;
     }
 
     h2 {
@@ -481,7 +617,7 @@ h2 {
 
 .board-snapshot {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(var(--snapshot-size, 3), 1fr);
     grid-gap: 10px;
     /* Restored gap */
     width: 150px;
@@ -491,11 +627,23 @@ h2 {
     pointer-events: none;
 }
 
+/* Snapshot scales with the active difficulty so every board fits the share card */
+.board-snapshot[data-difficulty='medium'] {
+    --snapshot-size: 5;
+    width: 200px;
+    grid-gap: 6px;
+}
+
+.board-snapshot[data-difficulty='high'] {
+    --snapshot-size: 8;
+    width: 240px;
+    grid-gap: 4px;
+}
+
 .board-snapshot app-board {
-    height: 45px !important;
-    /* Restored height */
-    width: 45px !important;
-    /* Restored width */
+    height: auto !important;
+    width: auto !important;
+    aspect-ratio: 1 / 1;
 }
 
 .board-snapshot ::ng-deep .square {
@@ -503,9 +651,14 @@ h2 {
     border-radius: 8px !important;
 }
 
-.board-snapshot app-board {
-    height: 120px;
-    /* Ensure it keeps original aspect ratio before scaling */
+.board-snapshot[data-difficulty='medium'] ::ng-deep .square {
+    font-size: 0.95rem !important;
+    border-radius: 6px !important;
+}
+
+.board-snapshot[data-difficulty='high'] ::ng-deep .square {
+    font-size: 0.6rem !important;
+    border-radius: 4px !important;
 }
 
 
