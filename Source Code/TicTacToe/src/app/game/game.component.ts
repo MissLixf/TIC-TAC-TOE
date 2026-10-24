@@ -32,6 +32,32 @@ import html2canvas from 'html2canvas';
 import { DecimalPipe } from '@angular/common';
 import { BoardComponent } from '../board/board.component';
 import { SoundService } from '../sound.service';
+import { Cell, createBoard, findWinningLine } from './game-logic';
+
+/**
+ * @typedef DifficultyKey
+ * @description Identifiers for the three supported difficulty levels.
+ */
+export type DifficultyKey = 'easy' | 'medium' | 'hard';
+
+/**
+ * @interface DifficultyConfig
+ * @description Board geometry and victory threshold for a difficulty level.
+ */
+export interface DifficultyConfig {
+  key: DifficultyKey;
+  label: string;
+  size: number;
+  winLength: number;
+  boardWidth: number;
+  gap: number;
+}
+
+export const DIFFICULTIES: Record<DifficultyKey, DifficultyConfig> = {
+  easy: { key: 'easy', label: 'Easy', size: 3, winLength: 3, boardWidth: 380, gap: 10 },
+  medium: { key: 'medium', label: 'Medium', size: 5, winLength: 4, boardWidth: 540, gap: 8 },
+  hard: { key: 'hard', label: 'Hard', size: 8, winLength: 6, boardWidth: 560, gap: 4 }
+};
 
 @Component({
   selector: 'app-game',
@@ -42,10 +68,15 @@ import { SoundService } from '../sound.service';
 /**
  * @class GameComponent
  * @description State-driven component leveraging Angular's fine-grained reactivity.
- * Implements a 3x3 grid logic with automatic resolution for victory/draw states.
+ * Supports three board sizes (3x3, 5x5, 8x8) with per-difficulty victory thresholds.
  */
 export class GameComponent implements OnInit {
-  squares = signal<('X' | 'O' | undefined)[]>(Array(9).fill(undefined));
+  difficulty = signal<DifficultyKey>('easy');
+  readonly difficulties = Object.values(DIFFICULTIES);
+  difficultyConfig = computed(() => DIFFICULTIES[this.difficulty()]);
+  boardSize = computed(() => this.difficultyConfig().size);
+  winLength = computed(() => this.difficultyConfig().winLength);
+  squares = signal<Cell[]>(createBoard(DIFFICULTIES.easy.size));
   xIsNext = signal<boolean>(true);
   winner = signal<'X' | 'O' | null>(null);
   counter = signal<number>(0);
@@ -183,7 +214,7 @@ export class GameComponent implements OnInit {
     const win = this.calculateWinner();
     this.winner.set(win);
 
-    if (win || this.counter() == 9) {
+    if (win || this.counter() === this.boardSize() ** 2) {
       this.gameConcluding.set(true); // Trigger animations
 
       if (win) {
@@ -202,35 +233,57 @@ export class GameComponent implements OnInit {
 
   /**
    * @method calculateWinner
-   * @description Implementation of the core win-condition evaluation strategy.
-   * Iterates through pre-defined combinatorial victory paths to determine match resolution.
+   * @description Scans the board in four directions (horizontal, vertical and both
+   * diagonals) for `winLength` consecutive marks, which makes the evaluator work
+   * for every supported board size. The first matching run becomes the winning line.
    * @returns The winning symbol ('X' or 'O') or null if no winner exists.
    */
   calculateWinner() {
-    const lines = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8],
-      [0, 3, 6], [1, 4, 7], [2, 5, 8],
-      [0, 4, 8], [2, 4, 6]
-    ]
+    const squares = this.squares();
+    const line = findWinningLine(squares, this.boardSize(), this.winLength());
+    this.winningIndices.set(line ?? []);
+    return line ? (squares[line[0]] ?? null) : null;
+  }
 
-    for (let i = 0; i < lines.length; i++) {
-      const [a, b, c] = lines[i];
-      const squares = this.squares();
-      if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-        this.winningIndices.set([a, b, c]);
-        return squares[a];
-      }
-    }
-    return null
+  /**
+   * @method setDifficulty
+   * @description Switches the active difficulty and rebuilds the board with the
+   * matching geometry. Safe to call from the landing screen or mid-game.
+   * @param key - The difficulty level selected by the user.
+   */
+  setDifficulty(key: DifficultyKey) {
+    if (key === this.difficulty()) return;
+    this.soundService.playClick();
+    this.difficulty.set(key);
+    this.resetBoard();
+  }
+
+  /**
+   * @method changeDifficulty
+   * @description Returns the player to the landing screen so a new difficulty can be chosen.
+   */
+  changeDifficulty() {
+    this.soundService.playClick();
+    this.resetBoard();
+    this.freshPage.set(true);
   }
 
   newGame() {
     this.soundService.playClick();
-    this.squares.set(Array(9).fill(undefined));
+    this.resetBoard();
+    this.freshPage.set(false);
+  }
+
+  /**
+   * @method resetBoard
+   * @description Clears every transient game signal and rebuilds the grid for the
+   * currently selected difficulty.
+   */
+  private resetBoard() {
+    this.squares.set(createBoard(this.boardSize()));
     this.winner.set(null);
     this.isDraw.set(false);
     this.counter.set(0);
-    this.freshPage.set(false);
     this.showCard.set(false);
     this.winningIndices.set([]);
     this.gameConcluding.set(false);

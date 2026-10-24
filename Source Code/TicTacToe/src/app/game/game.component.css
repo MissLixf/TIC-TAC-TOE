@@ -57,6 +57,76 @@
     width: 100%;
 }
 
+/* Difficulty selector (landing screen) */
+.difficulty-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    animation: fadeInUp 1.2s ease-out;
+}
+
+.difficulty-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 130px;
+    margin: 0;
+    padding: 12px 18px;
+    border: 2px solid rgba(255, 255, 255, 0.55);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+    font-size: 1rem;
+    animation: fadeInUp 1.2s ease-out;
+}
+
+.difficulty-btn:hover {
+    transform: translateY(-4px) scale(1.03);
+    background: rgba(255, 255, 255, 0.45);
+    box-shadow: 0 12px 30px rgba(0, 255, 204, 0.35);
+}
+
+.difficulty-btn.is-active {
+    background: #00ffcc;
+    border-color: #00ffcc;
+    color: #1a2a6c;
+    box-shadow: 0 10px 25px rgba(0, 255, 204, 0.45);
+}
+
+.difficulty-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.difficulty-meta {
+    font-size: 0.7rem;
+    letter-spacing: 0.5px;
+    opacity: 0.85;
+    white-space: nowrap;
+}
+
+.difficulty-chip {
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    color: #fff;
+    padding: 5px 16px;
+    border-radius: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.difficulty-change-btn {
+    background: rgba(255, 255, 255, 0.35);
+    color: #1a2a6c;
+    font-size: 22px;
+    padding: 8px 26px;
+}
+
 .game-logo-title {
     font-family: 'Play', sans-serif;
     font-size: 1.8rem;
@@ -82,13 +152,18 @@
 }
 
 main {
+    /* Board geometry is driven by the selected difficulty (--cols / --board-width / --gap). */
+    --board-padding: 15px;
+    --cell-size: calc((min(var(--board-width, 380px), 92vw) - (var(--cols, 3) - 1) * var(--gap, 10px) - 2 * var(--board-padding)) / var(--cols, 3));
     font-family: 'Play', sans-serif;
     display: grid;
-    grid-template-columns: 120px 120px 120px;
-    grid-gap: 10px;
+    width: min(var(--board-width, 380px), 92vw);
+    grid-template-columns: repeat(var(--cols, 3), 1fr);
+    grid-gap: var(--gap, 10px);
     /* Modern spacing */
     margin: 15px 0;
-    padding: 15px;
+    padding: var(--board-padding);
+    box-sizing: border-box;
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(15px);
     border-radius: 25px;
@@ -99,8 +174,13 @@ main {
 app-board {
     font-family: 'Play', sans-serif;
     border: none;
-    height: 120px;
+    height: var(--cell-size);
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+}
+
+/* Scale the mark down as the grid grows so large boards stay legible. */
+main ::ng-deep .square {
+    font-size: clamp(14px, calc(var(--cell-size) * 0.45), 60px);
 }
 
 /* Winning State Cinematic Recoloring */
@@ -286,15 +366,9 @@ h2 {
         gap: 5px;
     }
 
-    app-board {
-        height: 85px;
-        /* Smaller cards for mobile */
-    }
-
     main {
-        grid-template-columns: repeat(3, 85px);
+        --board-padding: 10px;
         margin: 5px 0;
-        padding: 10px;
     }
 
     h2 {
@@ -481,31 +555,23 @@ h2 {
 
 .board-snapshot {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-gap: 10px;
-    /* Restored gap */
-    width: 150px;
-    /* Restored width */
+    grid-template-columns: repeat(var(--cols, 3), 1fr);
+    grid-gap: 4px;
+    /* Grows with the column count so 8x8 snapshots stay readable */
+    width: min(240px, calc(60px + var(--cols, 3) * 30px));
     margin: 15px 0;
-    /* Restored margin */
     pointer-events: none;
 }
 
 .board-snapshot app-board {
-    height: 45px !important;
-    /* Restored height */
-    width: 45px !important;
-    /* Restored width */
+    height: auto !important;
+    width: auto !important;
+    aspect-ratio: 1;
 }
 
 .board-snapshot ::ng-deep .square {
-    font-size: 1.2rem !important;
+    font-size: clamp(0.6rem, calc(min(240px, 60px + var(--cols, 3) * 30px) / var(--cols, 3) * 0.42), 1.2rem) !important;
     border-radius: 8px !important;
-}
-
-.board-snapshot app-board {
-    height: 120px;
-    /* Ensure it keeps original aspect ratio before scaling */
 }
 
 
