@@ -60,6 +60,15 @@
   @if (freshPage()) {
   <div class="landing-center-wrap">
     <h2>Let's Play Tic-Tac-Toe</h2>
+    <div class="difficulty-group" role="group" aria-label="Select difficulty">
+      @for (level of difficulties; track level.key) {
+      <button class="difficulty-btn" [class.is-active]="difficulty() === level.key"
+        [attr.aria-pressed]="difficulty() === level.key" (click)="setDifficulty(level.key)">
+        <span class="difficulty-name">{{ level.label }}</span>
+        <span class="difficulty-meta">{{ level.size }}×{{ level.size }} · {{ level.winLength }} in a row</span>
+      </button>
+      }
+    </div>
     <div class="button-group">
       <button outline (click)="newGame()">Start New Game</button>
     </div>
@@ -68,6 +77,11 @@
 
   @if (!freshPage()) {
   <h1 class="game-logo-title">TIC-TAC-TOE</h1>
+  }
+  @if (!freshPage()) {
+  <div class="difficulty-chip">
+    {{ difficultyConfig().label }} · {{ boardSize() }}×{{ boardSize() }} · {{ winLength() }} in a row
+  </div>
   }
 
   @if (!winner() && !isDraw() && !freshPage()) {
@@ -83,6 +97,7 @@
   <div class="button-group">
     <button outline (click)="newGame()">Start New Game</button>
     <button class="share-btn" (click)="toggleShareCard()">Share Results</button>
+    <button class="difficulty-change-btn" (click)="changeDifficulty()">Change Difficulty</button>
   </div>
   }
   <!-- Share Card Overlay -->
@@ -98,8 +113,8 @@
       }
       <div class="card-msg">{{ winner() ? 'Unbeatable Match!' : 'Perfect Symmetry!' }}</div>
       <!-- Mini Board Snapshot -->
-      <div class="board-snapshot">
-        @for (val of squares(); track val; let i = $index) {
+      <div class="board-snapshot" [style.--cols]="boardSize()">
+        @for (val of squares(); track $index; let i = $index) {
         <app-board [value]="val" [isWinning]="winningIndices().includes(i)" [isSnapshot]="true"></app-board>
         }
       </div>
@@ -129,8 +144,9 @@
   </div>
   }
   @if (!freshPage() && (!winner() || !isDraw() || gameConcluding())) {
-  <main>
-    @for (val of squares(); track val; let i = $index) {
+  <main [style.--cols]="boardSize()" [style.--board-width.px]="difficultyConfig().boardWidth"
+    [style.--gap.px]="difficultyConfig().gap">
+    @for (val of squares(); track $index; let i = $index) {
     <app-board [value]="val" (click)="makeMove(i)" [class.victory-flip]="winningIndices().includes(i)"
       [class.draw-shake]="isDraw() && gameConcluding()"></app-board>
     }
